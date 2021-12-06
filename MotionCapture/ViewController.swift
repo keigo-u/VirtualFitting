@@ -13,7 +13,7 @@ class ViewController: UIViewController, ARSessionDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     
-    let nameList = ["root","hips_joint","left_upLeg_joint","left_leg_joint","right_upLeg_joint","right_leg_joint","neck_1_joint","spine_1_joint"]
+    let nameList = ["root",/*"hips_joint","left_upLeg_joint","left_leg_joint","right_upLeg_joint","right_leg_joint","neck_1_joint","spine_1_joint"*/]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -121,6 +121,7 @@ class ViewController: UIViewController, ARSessionDelegate {
                         nodeToUpdate.isHidden = false
                         nodeToUpdate.position = position
                     } else {
+                        /*
                         // GeoSphere
                         // Radius 球の半径で初期値は 1。
                         let sphereGeometry = SCNSphere(radius: 0.02)
@@ -136,6 +137,12 @@ class ViewController: UIViewController, ARSessionDelegate {
                         sphereNode.name = jointName
                         // ルートノードに追加する
                         sceneView.scene.rootNode.addChildNode(sphereNode)
+                        */
+                        guard let scene = SCNScene(named: "art.scnassets/ship.scn") else {return}
+                        let shipNode = (scene.rootNode.childNode(withName: "ship", recursively: false))!
+                        shipNode.name = jointName
+                        shipNode.position = position
+                        sceneView.scene.rootNode.addChildNode(shipNode)
                     }
                 } else {
                     if let nodeToHide = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
