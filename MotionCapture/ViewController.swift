@@ -103,52 +103,84 @@ class ViewController: UIViewController, ARSessionDelegate {
         // skeleton 取得
         let skeleton = anchor.skeleton
         // skeleton の パーツ名でloop
-        for jointName in skeleton.definition.jointNames {
-            if checkJointName(name: jointName) {
-                let jointType = ARSkeleton.JointName(rawValue: jointName)
-                if let transform = skeleton.modelTransform(for: jointType) {
-                    /// jointTypeの位置・回転をキャスト
-                    let partsPoint = SCNMatrix4(transform)
-                    /// 基準点 hipの位置・回転をキャスト
-                    let hipPoint = SCNMatrix4(anchor.transform)
-                    /// func SCNMatrix4Mult(_ a: SCNMatrix4, _ b: SCNMatrix4) -> SCNMatrix4で行列を合成するときは、左のaが後にやる方、右のbが先にやる方、という風に考えて合成します。
-                    let matrix = SCNMatrix4Mult(partsPoint, hipPoint)
-                    /// ノードの座標を設定
-                    // + 1して実際の位置の右側に表示する様にする
-                    let position = SCNVector3(matrix.m41, matrix.m42, matrix.m43)
-                    if let nodeToUpdate = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
-                        /// 既に追加されているので、位置の更新のみ行う
-                        nodeToUpdate.isHidden = false
-                        nodeToUpdate.position = position
-                    } else {
-                        /*
-                        // GeoSphere
-                        // Radius 球の半径で初期値は 1。
-                        let sphereGeometry = SCNSphere(radius: 0.02)
-                        // チェックすると三角ポリゴンを均等に面が構成される。 初期値はfalse
-                        sphereGeometry.isGeodesic = true
-                        // 球体Color
-                        sphereGeometry.firstMaterial?.diffuse.contents = UIColor.green
-                        // ノードに球体ジオメトリを設定
-                        let sphereNode = SCNNode(geometry: sphereGeometry)
-                        // 表示位置設定
-                        sphereNode.position = position
-                        // ノードにname設定
-                        sphereNode.name = jointName
-                        // ルートノードに追加する
-                        sceneView.scene.rootNode.addChildNode(sphereNode)
-                        */
-                        let shipNode = (sceneView.scene.rootNode.childNode(withName: "ship", recursively: false))!
-                        shipNode.name = jointName
-                        shipNode.position = position
-                        sceneView.scene.rootNode.addChildNode(shipNode)
-                    }
+        for jointName in nameList {
+            let jointType = ARSkeleton.JointName(rawValue: jointName)
+            if let transform = skeleton.modelTransform(for: jointType) {
+                /// jointTypeの位置・回転をキャスト
+                let partsPoint = SCNMatrix4(transform)
+                /// 基準点 hipの位置・回転をキャスト
+                let hipPoint = SCNMatrix4(anchor.transform)
+                /// func SCNMatrix4Mult(_ a: SCNMatrix4, _ b: SCNMatrix4) -> SCNMatrix4で行列を合成するときは、左のaが後にやる方、右のbが先にやる方、という風に考えて合成します。
+                let matrix = SCNMatrix4Mult(partsPoint, hipPoint)
+                /// ノードの座標を設定
+                // + 1して実際の位置の右側に表示する様にする
+                let position = SCNVector3(matrix.m41, matrix.m42, matrix.m43)
+                if let nodeToUpdate = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
+                    /// 既に追加されているので、位置の更新のみ行う
+                    nodeToUpdate.isHidden = false
+                    nodeToUpdate.position = position
                 } else {
-                    if let nodeToHide = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
-                        nodeToHide.isHidden = true
-                    }
+                    let shipNode = (sceneView.scene.rootNode.childNode(withName: "ship", recursively: false))!
+                    shipNode.name = jointName
+                    shipNode.position = position
+                    sceneView.scene.rootNode.addChildNode(shipNode)
+                }
+            } else {
+                if let nodeToHide = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
+                    nodeToHide.isHidden = true
                 }
             }
         }
     }
+    
+    @IBAction func photoButtonTapped(_ sender: Any) {
+        //showUIImagePicker()
+    }
+    /*
+    private func showUIImagePicker() {
+        if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
+            let pickerView = UIImagePickerController()
+            pickerView.sourceType = .photoLibrary
+            pickerView.delegate = self
+            pickerView.modalPresentationStyle = .overFullScreen
+            self.present(pickerView, animated: true, completion: nil)
+        }
+    }
+    
+    private func setImageToScene(image: UIImage) {
+        if let camera = sceneView.pointOfView {
+            let position = SCNVector3(x: 0, y: 0, z: -0.5) // 偏差のベクトルを生成する
+            let convertPosition = camera.convertPosition(position, to: nil)
+            let node = createPhotoNode(image, position: convertPosition)
+            self.sceneView.scene.rootNode.addChildNode(node)
+        }
+    }
+    
+    private func createPhotoNode(_ image: UIImage, position: SCNVector3) -> SCNNode {
+        let node = SCNNode()
+        let scale: CGFloat = 0.3
+        let geometry = SCNBox(width: image.size.width * scale / image.size.height,
+                                height: scale,
+                                length: 0.00000001,
+                                chamferRadius: 0.0)
+        geometry.firstMaterial?.diffuse.contents = image
+        node.geometry = geometry
+        node.position = position
+        node.name = "img"
+        return node
+    }*/
 }
+/*
+extension ViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        if let image = info[.originalImage] as? UIImage {
+            setImageToScene(image: image)
+        }
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
+    }
+}*/
