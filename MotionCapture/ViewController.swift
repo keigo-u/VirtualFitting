@@ -13,14 +13,14 @@ class ViewController: UIViewController, ARSessionDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     
-    let nameList = ["root",/*"hips_joint","left_upLeg_joint","left_leg_joint","right_upLeg_joint","right_leg_joint","neck_1_joint","spine_1_joint"*/]
+    let nameList = ["root"/*,"hips_joint","left_upLeg_joint","left_leg_joint","right_upLeg_joint","right_leg_joint","neck_1_joint","spine_1_joint"*/]
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         // ビューのデリゲートを設定する
         sceneView.session.delegate = self
-        let scene = SCNScene(/*named: "art.scnassets/ship.scn"*/)
+        let scene = SCNScene(named: "art.scnassets/ship.scn")!
         sceneView.scene = scene
     }
     
@@ -125,7 +125,7 @@ class ViewController: UIViewController, ARSessionDelegate {
                         // GeoSphere
                         // Radius 球の半径で初期値は 1。
                         let sphereGeometry = SCNSphere(radius: 0.02)
-                        // チェックすると三角ポリゴンを均等に麺が構成される。 初期値はfalse
+                        // チェックすると三角ポリゴンを均等に面が構成される。 初期値はfalse
                         sphereGeometry.isGeodesic = true
                         // 球体Color
                         sphereGeometry.firstMaterial?.diffuse.contents = UIColor.green
@@ -138,8 +138,7 @@ class ViewController: UIViewController, ARSessionDelegate {
                         // ルートノードに追加する
                         sceneView.scene.rootNode.addChildNode(sphereNode)
                         */
-                        guard let scene = SCNScene(named: "art.scnassets/ship.scn") else {return}
-                        let shipNode = (scene.rootNode.childNode(withName: "ship", recursively: false))!
+                        let shipNode = (sceneView.scene.rootNode.childNode(withName: "ship", recursively: false))!
                         shipNode.name = jointName
                         shipNode.position = position
                         sceneView.scene.rootNode.addChildNode(shipNode)
