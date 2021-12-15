@@ -13,14 +13,17 @@ class ViewController: UIViewController, ARSessionDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     
-    let nameList = ["root"/*,"hips_joint","left_upLeg_joint","left_leg_joint","right_upLeg_joint","right_leg_joint","neck_1_joint","spine_1_joint"*/]
+    let nameList = ["spine_6_joint"]
+    var nodePosition: [String: SCNVector3] = [:]
+    
+    var image = UIImage(named: "art.scnassets/no_image.png")!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         // ビューのデリゲートを設定する
         sceneView.session.delegate = self
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        let scene = SCNScene()
         sceneView.scene = scene
     }
     
@@ -103,7 +106,7 @@ class ViewController: UIViewController, ARSessionDelegate {
         // skeleton 取得
         let skeleton = anchor.skeleton
         // skeleton の パーツ名でloop
-        for jointName in nameList {
+        for jointName in skeleton.definition.jointNames {
             let jointType = ARSkeleton.JointName(rawValue: jointName)
             if let transform = skeleton.modelTransform(for: jointType) {
                 /// jointTypeの位置・回転をキャスト
@@ -114,16 +117,18 @@ class ViewController: UIViewController, ARSessionDelegate {
                 let matrix = SCNMatrix4Mult(partsPoint, hipPoint)
                 /// ノードの座標を設定
                 // + 1して実際の位置の右側に表示する様にする
-                let position = SCNVector3(matrix.m41, matrix.m42, matrix.m43)
-                if let nodeToUpdate = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
-                    /// 既に追加されているので、位置の更新のみ行う
-                    nodeToUpdate.isHidden = false
-                    nodeToUpdate.position = position
-                } else {
-                    let shipNode = (sceneView.scene.rootNode.childNode(withName: "ship", recursively: false))!
-                    shipNode.name = jointName
-                    shipNode.position = position
-                    sceneView.scene.rootNode.addChildNode(shipNode)
+                let position = SCNVector3(matrix.m41, matrix.m42 - 0.1, matrix.m43)
+                nodePosition[jointName] = position
+                if checkJointName(name: jointName) {
+                    if let nodeToUpdate = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
+                        /// 既に追加されているので、位置の更新のみ行う
+                        nodeToUpdate.isHidden = false
+                        nodeToUpdate.position = position
+                        nodeToUpdate.geometry?.firstMaterial?.diffuse.contents = image
+                    } else {
+                        let photoNode = createPhotoNode(image, position: position, jointName: jointName)
+                        sceneView.scene.rootNode.addChildNode(photoNode)
+                    }
                 }
             } else {
                 if let nodeToHide = sceneView.scene.rootNode.childNode(withName: jointName, recursively: false) {
@@ -134,9 +139,9 @@ class ViewController: UIViewController, ARSessionDelegate {
     }
     
     @IBAction func photoButtonTapped(_ sender: Any) {
-        //showUIImagePicker()
+        showUIImagePicker()
     }
-    /*
+    
     private func showUIImagePicker() {
         if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
             let pickerView = UIImagePickerController()
@@ -147,40 +152,29 @@ class ViewController: UIViewController, ARSessionDelegate {
         }
     }
     
-    private func setImageToScene(image: UIImage) {
-        if let camera = sceneView.pointOfView {
-            let position = SCNVector3(x: 0, y: 0, z: -0.5) // 偏差のベクトルを生成する
-            let convertPosition = camera.convertPosition(position, to: nil)
-            let node = createPhotoNode(image, position: convertPosition)
-            self.sceneView.scene.rootNode.addChildNode(node)
-        }
-    }
-    
-    private func createPhotoNode(_ image: UIImage, position: SCNVector3) -> SCNNode {
+    private func createPhotoNode(_ image: UIImage, position: SCNVector3, jointName: String) -> SCNNode {
         let node = SCNNode()
-        let scale: CGFloat = 0.3
-        let geometry = SCNBox(width: image.size.width * scale / image.size.height,
-                                height: scale,
+        //let scale: CGFloat = 0.5
+        let geometry = SCNBox(width: 0.6,
+                              height: 0.8,
                                 length: 0.00000001,
                                 chamferRadius: 0.0)
         geometry.firstMaterial?.diffuse.contents = image
         node.geometry = geometry
         node.position = position
-        node.name = "img"
+        node.name = jointName
         return node
-    }*/
+    }
 }
-/*
+
 extension ViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let image = info[.originalImage] as? UIImage {
-            setImageToScene(image: image)
-        }
+        image = info[.originalImage] as! UIImage
         picker.dismiss(animated: true, completion: nil)
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true, completion: nil)
     }
-}*/
+}
