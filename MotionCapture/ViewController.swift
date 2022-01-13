@@ -9,7 +9,7 @@ import UIKit
 import SceneKit
 import ARKit
 
-class ViewController: UIViewController, ARSessionDelegate {
+class ViewController: UIViewController, ARSessionDelegate, UIGestureRecognizerDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     
@@ -20,6 +20,13 @@ class ViewController: UIViewController, ARSessionDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let pinch = UIPinchGestureRecognizer(
+            target: self,
+            action: #selector(type(of: self).scenePinchGesture(_:))
+        )
+        pinch.delegate = self
+        sceneView.addGestureRecognizer(pinch)
         
         // ビューのデリゲートを設定する
         sceneView.session.delegate = self
@@ -33,10 +40,15 @@ class ViewController: UIViewController, ARSessionDelegate {
         guard ARBodyTrackingConfiguration.isSupported else {
             fatalError("This feature is only supported on devices with an A12 chip")
         }
+        
+        guard ARWorldTrackingConfiguration.supportsFrameSemantics(.personSegmentationWithDepth) else {
+            fatalError("People occlusion is not supported on this device.")
+        }
 
         // セッション構成を作成する
         let configuration = ARBodyTrackingConfiguration()
         configuration.planeDetection = .horizontal
+        //configuration.frameSemantics = .personSegmentationWithDepth
 
         // ビューのセッションを実行します
         sceneView.session.run(configuration)
@@ -164,6 +176,32 @@ class ViewController: UIViewController, ARSessionDelegate {
         node.position = position
         node.name = jointName
         return node
+    }
+    
+    var lastGestureScale: Float = 1
+    @objc func scenePinchGesture(_ recognizer: UIPinchGestureRecognizer) {
+        print("pinch!")
+        if let photoNode = sceneView.scene.rootNode.childNode(withName: nameList[0], recursively: true) {
+            /*if recognizer.state == .began {
+                let lastGestureScale = 1
+            }*/
+
+            let newGestureScale: Float = Float(recognizer.scale)
+
+            // ここで直前のscaleとのdiffぶんだけ取得しときます
+            let diff = newGestureScale - lastGestureScale
+
+            let currentScale = photoNode.scale
+
+            // diff分だけscaleを変化させる。1は1倍、1.2は1.2倍の大きさになります。
+            photoNode.scale = SCNVector3Make(
+                currentScale.x * (1 + diff),
+                currentScale.y * (1 + diff),
+                currentScale.z * (1 + diff)
+            )
+            // 保存しとく
+            lastGestureScale = newGestureScale
+        }
     }
 }
 
